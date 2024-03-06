@@ -37,7 +37,6 @@ public class MineSweeper extends Application {
                 buttons[i][j] = new MineButton();
                 MineButton temp = buttons[i][j];
                 buttons[i][j].setOnMouseClicked(e -> {
-//TODO: Refactor this code to use a switch statement
                     buttons[1][1].state = 5;
                     buttons[3][2].state = 5;
                     buttons[3][3].state = 5;
