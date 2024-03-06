@@ -1,6 +1,5 @@
 package org.example.mine_sweeper;
 
-import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -11,14 +10,10 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import javafx.util.Duration;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MineSweeper extends Application {
-    private final int TOTALSAFECELLS = 22; // 25 cells - 3 mines
+
     private int revealedSafeCells = 0;
 
     public static void main(String[] args) {
@@ -29,46 +24,29 @@ public class MineSweeper extends Application {
 
         MineButton[][] buttons = new MineButton[5][5];
         FaceButton face = new FaceButton();
-        Pane pane = new Pane();
-        RedDigits redDigits = new RedDigits();
-
-        pane.getChildren().add(redDigits);
         GridPane gp = new GridPane();
         BorderPane bp = new BorderPane();
-
         HBox hb = new HBox();
+
         hb.getChildren().add(face);
         hb.setAlignment(Pos.TOP_CENTER);
-
-//        HBox leftSide = new HBox();
-//        leftSide.setAlignment(Pos.TOP_LEFT);
-//        leftSide.getChildren().add(new Pane());
-//
-//        HBox rightSide = new HBox();
-//        rightSide.setAlignment(Pos.TOP_RIGHT);
-//        rightSide.getChildren().add(pane);
 
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
 
-
                 buttons[i][j] = new MineButton();
                 MineButton temp = buttons[i][j];
                 buttons[i][j].setOnMouseClicked(e -> {
+//TODO: Refactor this code to use a switch statement
                     buttons[1][1].state = 5;
                     buttons[3][2].state = 5;
                     buttons[3][3].state = 5;
                     MouseButton button = e.getButton();
-                    if (button == MouseButton.SECONDARY) {
-                        //place flag
-                        if (temp.state == 0) {
-                            temp.setGraphic(temp.imageFlag);
-                            temp.state = 2;
-                        } else if (temp.state == 2) {
-                            temp.setGraphic(temp.imageCover);
-                            temp.state = 0;
-                        }
+
+                    if (temp.isClicked) {
+                        return;
                     }
+
                     if (button == MouseButton.PRIMARY && temp == buttons[0][0] ||
                             button == MouseButton.PRIMARY && temp == buttons[0][1] ||
                             button == MouseButton.PRIMARY && temp == buttons[0][2] ||
@@ -82,8 +60,9 @@ public class MineSweeper extends Application {
                             button == MouseButton.PRIMARY && temp == buttons[4][4]) {
 
                         temp.setGraphic(temp.image1);
-                        temp.state = 1;
-                        revealedSafeCells++;
+                        temp.isClicked = true;
+                        setState(buttons, face, temp);
+
 
                     } else if (button == MouseButton.PRIMARY && temp == buttons[2][1] ||
                             button == MouseButton.PRIMARY && temp == buttons[4][2] ||
@@ -91,20 +70,21 @@ public class MineSweeper extends Application {
                             button == MouseButton.PRIMARY && temp == buttons[4][3]) {
 
                         temp.setGraphic(temp.image2);
-                        temp.state = 1;
-                        revealedSafeCells++;
+                        temp.isClicked = true;
+                        setState(buttons, face, temp);
 
                     } else if (button == MouseButton.PRIMARY && temp == buttons[2][2]) {
 
                         temp.setGraphic(temp.image3);
-                        temp.state = 1;
-                        revealedSafeCells++;
+                        temp.isClicked = true;
+                        setState(buttons, face, temp);
 
                     } else if (button == MouseButton.PRIMARY && temp == buttons[1][1] ||
                             button == MouseButton.PRIMARY && temp == buttons[3][2] ||
                             button == MouseButton.PRIMARY && temp == buttons[3][3]) {
 
                         temp.state = 4;
+                        temp.isClicked = true;
                         temp.setGraphic(temp.imageMineRed);
                         face.setGraphic(face.imageLose);
 
@@ -122,24 +102,41 @@ public class MineSweeper extends Application {
                         }
                     } else {
                         temp.setGraphic(temp.image0);
-                        temp.state = 1;
-                        // Start a fade-in animation.
+                        temp.isClicked = true;
+                        setState(buttons, face, temp);
                     }
                 });
                 gp.add(buttons[i][j], i, j);
             }
         }
-
         bp.setTop(hb);
         bp.setCenter(gp);
 
         theStage.setScene(new Scene(bp));
         theStage.show();
     }
+
+    private void setState(MineButton[][] buttons, FaceButton face, MineButton temp) {
+        temp.state = 1;
+        revealedSafeCells++;
+        int totalSafeCells = 25 - 3; // 25 cells - 3 mines
+        if (revealedSafeCells == totalSafeCells) {
+            face.setGraphic(face.imageWin);
+            for (int a = 0; a < 5; a++) {
+                for (int b = 0; b < 5; b++) {
+                    if (buttons[a][b].state == 5) {
+                        buttons[a][b].setGraphic(buttons[a][b].imageMine);
+                    }
+                    buttons[a][b].setDisable(true);
+                }
+            }
+        }
+    }
 }
 
 class MineButton extends Button {
-    int state; // 0 = covered, 1 = uncovered, 2 = flagged, 3 = misflagged, 4 = mine, 5 = covered mine
+    int state; // 0 = covered, 1 = uncovered, 2 = flagged, 3 = misflagged, 4 = mine, 5 = covered mine, 6 = Is Clicked
+    boolean isClicked = false;
     ImageView imageCover, image0, image1, image2, image3, image4, image5, image6, image7, image8, imageMine, imageFlag,
             imageMisFlagged, imageMineRed;
 
@@ -192,5 +189,40 @@ class RedDigits extends Button {
         imageRed9 = new ImageView(new Image("file:src/main/java/org/example/mine_sweeper/digits/9.png"));
 
         setGraphic(imageRed0);
+    }
+
+    public void setGraphic(int gameScore) {
+        switch (gameScore) {
+            case 0:
+                setGraphic(imageRed0);
+                break;
+            case 1:
+                setGraphic(imageRed1);
+                break;
+            case 2:
+                setGraphic(imageRed2);
+                break;
+            case 3:
+                setGraphic(imageRed3);
+                break;
+            case 4:
+                setGraphic(imageRed4);
+                break;
+            case 5:
+                setGraphic(imageRed5);
+                break;
+            case 6:
+                setGraphic(imageRed6);
+                break;
+            case 7:
+                setGraphic(imageRed7);
+                break;
+            case 8:
+                setGraphic(imageRed8);
+                break;
+            case 9:
+                setGraphic(imageRed9);
+                break;
+        }
     }
 }
