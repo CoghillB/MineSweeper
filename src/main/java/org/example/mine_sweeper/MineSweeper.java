@@ -15,7 +15,17 @@ import javafx.stage.Stage;
 import java.util.Random;
 
 public class MineSweeper extends Application {
+    private static final int MINE = 5;
     private int revealedSafeCells = 0;
+    private final int BEGINNERMINES = 10;
+    private final int INTERMEDIATEMINES = 40;
+    private final int EXPERTMINES = 99;
+    private final int BEGINNERROWS = 8;
+    private final int BEGINNERCOLUMNS = 8;
+    private final int INTERMEDIATEROWS = 16;
+    private final int INTERMEDIATECOLUMNS = 16;
+    private final int EXPERTROWS = 30;
+    private final int EXPERTCOLUMNS = 30;
 
     public static void main(String[] args) {
         launch(args);
@@ -27,7 +37,13 @@ public class MineSweeper extends Application {
         BorderPane bp = new BorderPane();
         GridPane gp = new GridPane();
         HBox hb = new HBox();
-        MineButton[][] buttons = new MineButton[8][8];
+        MineButton[][] buttons = new MineButton[BEGINNERROWS][BEGINNERCOLUMNS];
+        for (int i = 0; i < BEGINNERROWS; i++) {
+            for (int j = 0; j < BEGINNERCOLUMNS; j++) {
+                buttons[i][j] = new MineButton();
+            }
+        }
+        setMines(buttons);
         FaceButton face = new FaceButton();
         Random rand = new Random();
 
@@ -43,17 +59,17 @@ public class MineSweeper extends Application {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
 
-                buttons[i][j] = new MineButton();
+//                buttons[i][j] = new MineButton();
                 MineButton temp = buttons[i][j];
 
+
                 buttons[i][j].setOnMouseClicked(e -> {
-                    buttons[1][1].state = 5;
-                    buttons[3][2].state = 5;
-                    buttons[3][3].state = 5;
+//                    buttons[1][1].state = 5;
+//                    buttons[3][2].state = 5;
+//                    buttons[3][3].state = 5;
                     MouseButton button = e.getButton();
 
-                    // TODO: change so you can unflag a mine after being flagged
-                    // TODO: create method to make a random board every game with the math to place numbers in the right place
+                    //TODO: implement the logic for setNumbers and setState
 
                     if (temp.isClicked && button == MouseButton.PRIMARY) {
                         return;
@@ -72,52 +88,21 @@ public class MineSweeper extends Application {
                         temp.isClicked = false;
                     } else if (button == MouseButton.PRIMARY) {
 
-                        if (temp == buttons[0][0] || temp == buttons[0][1] || temp == buttons[0][2] ||
-                                temp == buttons[1][0] || temp == buttons[3][1] || temp == buttons[4][1] ||
-                                temp == buttons[2][0] || temp == buttons[1][2] || temp == buttons[2][4] ||
-                                temp == buttons[3][4] || temp == buttons[4][4]) {
-
-                            temp.setGraphic(temp.image1);
-                            temp.isClicked = true;
-                            setState(buttons, face, temp);
-
-
-                        } else if (temp == buttons[2][1] || temp == buttons[4][2] || temp == buttons[2][3] ||
-                                temp == buttons[4][3]) {
-
-                            temp.setGraphic(temp.image2);
-                            temp.isClicked = true;
-                            setState(buttons, face, temp);
-
-                        } else if (temp == buttons[2][2]) {
-
-                            temp.setGraphic(temp.image3);
-                            temp.isClicked = true;
-                            setState(buttons, face, temp);
-
-                        } else if (temp == buttons[1][1] || temp == buttons[3][2] || temp == buttons[3][3]) {
-
+                        if (temp.state == 5) {
                             temp.state = 4;
-                            temp.isClicked = true;
-                            temp.setGraphic(temp.imageMineRed);
-                            face.setGraphic(face.imageLose);
 
-                            for (int a = 0; a < 8; a++) {
-                                for (int b = 0; b < 8; b++) {
+                            face.setGraphic(new ImageView(new Image("File:src/main/java/org/example/mine_sweeper/pictures/face-dead.png")));
+                            temp.setGraphic(new ImageView(new Image("File:src/main/java/org/example/mine_sweeper/pictures/mine-red.png")));
+                            // sets the rest of the mines grey and reveals them
+                            for (int a = 0; a < BEGINNERROWS; a++) {
+                                for (int b = 0; b < BEGINNERCOLUMNS; b++) {
                                     if (buttons[a][b].state == 5) {
-                                        buttons[a][b].setGraphic(buttons[a][b].imageMine);
+                                        buttons[a][b].setGraphic(temp.imageMine = new ImageView(new Image
+                                                ("file:src/main/java/org/example/mine_sweeper/pictures/mine-grey.png")));
                                     }
-                                }
-                            }
-                            for (int a = 0; a < 8; a++) {
-                                for (int b = 0; b < 8; b++) {
                                     buttons[a][b].isClicked = true;
                                 }
                             }
-                        } else {
-                            temp.setGraphic(temp.image0);
-                            temp.isClicked = true;
-                            setState(buttons, face, temp);
                         }
                     }
                 });
@@ -148,6 +133,57 @@ public class MineSweeper extends Application {
             }
         }
     }
+
+    private void setMines(MineButton[][] buttons) {
+        Random rand = new Random();
+        for (int n = 1; n < BEGINNERMINES; n++) {
+            int x = rand.nextInt(BEGINNERROWS);
+            int y = rand.nextInt(BEGINNERCOLUMNS);
+            if (buttons[x][y].state == MINE) {
+                n--;
+            } else {
+                buttons[x][y].state = MINE;
+            }
+        }
+    }
+
+    private void setNumbers(MineButton[][] buttons) {
+        for (int i = 0; i < BEGINNERROWS; i++) {
+            for (int j = 0; j < BEGINNERCOLUMNS; j++) {
+                if (buttons[i][j].state != MINE) {
+                    int count = 0;
+                    if (i > 0 && j > 0 && buttons[i - 1][j - 1].state == MINE) {
+                        count++;
+                    }
+                    if (i > 0 && buttons[i - 1][j].state == MINE) {
+                        count++;
+                    }
+                    if (i > 0 && j < BEGINNERCOLUMNS - 1 && buttons[i - 1][j + 1].state == MINE) {
+                        count++;
+                    }
+                    if (j > 0 && buttons[i][j - 1].state == MINE) {
+                        count++;
+                    }
+                    if (j < BEGINNERCOLUMNS - 1 && buttons[i][j + 1].state == MINE) {
+                        count++;
+                    }
+                    if (i < BEGINNERROWS - 1 && j > 0 && buttons[i + 1][j - 1].state == MINE) {
+                        count++;
+                    }
+                    if (i < BEGINNERROWS - 1 && buttons[i + 1][j].state == MINE) {
+                        count++;
+                    }
+                    if (i < BEGINNERROWS - 1 && j < BEGINNERCOLUMNS - 1 && buttons[i + 1][j + 1].state == MINE) {
+                        count++;
+                    }
+                    if (count > 0) {
+                        buttons[i][j].state = count;
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 class MineButton extends Button {
